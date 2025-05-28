@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGN Investment Portfolio Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .card .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .number {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        .input-section {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #219a52;
+        }
+        .projection-table {
+            background: #f8f9fa;
+        }
+        .milestone {
+            background-color: #d4edda !important;
+            font-weight: bold;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-edit {
+            background: #3498db;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .btn-delete {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .status-active {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .status-matured {
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .export-import {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .chart-container {
+            margin: 20px 0;
+            height: 400px;
+        }
+    </style>
+    <script src="/Users/kniru/Desktop/acada/demo_apps/portfolio-tracker/js/db.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>NGN Investment Portfolio Tracker & Projections</h1>
+
+        <!-- Add reset button after the title -->
+        <div style="text-align: right; margin-bottom: 20px;">
+            <button onclick="resetDatabase()" style="background: #e74c3c;" aria-label="Reset Database">Reset Database</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>Current Portfolio Value</h3>
+                <p class="value" id="currentValue">₦4,693,000</p>
+            </div>
+            <div class="card">
+                <h3>Annual Interest Income</h3>
+                <p class="value" id="annualIncome">₦939,000</p>
+            </div>
+            <div class="card">
+                <h3>Years to Target (₦<span id="targetAmountDisplay">100M</span>)</h3>
+                <p class="value" id="yearsTo100M">0</p>
+            </div>
+            <div class="card">
+                <h3>Target Achievement</h3>
+                <p class="value" id="targetYear">2032</p>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h2>Portfolio Parameters</h2>
+            <div class="input-group">
+                <div>
+                    <label for="currentAmount">Current Investment (₦)</label>
+                    <input type="number" id="currentAmount" value="4693000" aria-label="Current Investment (₦)">
+                </div>
+                <div>
+                    <label for="monthlyAddition">Monthly Addition (₦)</label>
+                    <input type="number" id="monthlyAddition" value="650000" aria-label="Monthly Addition (₦)">
+                </div>
+                <div>
+                    <label for="interestRate">Annual Interest Rate (%)</label>
+                    <input type="number" id="interestRate" value="19" step="0.1" aria-label="Annual Interest Rate (%)">
+                </div>
+                <div>
+                    <label for="targetAmount">Target Amount (₦)</label>
+                    <input type="number" id="targetAmount" value="100000000" aria-label="Target Amount (₦)">
+                </div>
+            </div>
+            <button onclick="calculateProjections()" aria-label="Update Projections">Update Projections</button>
+        </div>
+
+        <div class="input-section">
+            <h2>Add New Investment</h2>
+            <div class="input-group">
+                <div>
+                    <label for="newInvestmentDate" aria-label="Investment Date">Investment Date</label>
+                    <input type="date" id="newInvestmentDate" required aria-required="true" aria-label="Investment Date">
+                </div>
+                <div>
+                    <label for="newInvestmentHouse" aria-label="Investment House">Investment House</label>
+                    <input type="text" id="newInvestmentHouse" placeholder="e.g., ARM Securities" required aria-required="true" aria-label="Investment House">
+                </div>
+                <div>
+                    <label for="newAmount" aria-label="Amount (₦)">Amount (₦)</label>
+                    <input type="number" id="newAmount" required aria-required="true" aria-label="Amount (₦)">
+                </div>
+                <div>
+                    <label for="newTerm" aria-label="Term (Days)">Term (Days)</label>
+                    <select id="newTerm" required aria-required="true" aria-label="Term (Days)">
+                        <option value="91">91 days</option>
+                        <option value="182">182 days</option>
+                        <option value="365">365 days</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="newRate" aria-label="Interest Rate (%)">Interest Rate (%)</label>
+                    <input type="number" id="newRate" step="0.1" required aria-required="true" aria-label="Interest Rate (%)">
+                </div>
+                <div>
+                    <label for="newMaturityDate" aria-label="Maturity Date">Maturity Date</label>
+                    <input type="date" id="newMaturityDate" required aria-required="true" aria-label="Maturity Date">
+                </div>
+            </div>
+            <button onclick="addInvestment()" aria-label="Add Investment">Add Investment</button>
+        </div>
+
+        <div class="export-import">
+            <button onclick="exportData()" aria-label="Export Data">Export Data</button>
+            <button onclick="importData()" aria-label="Import Data">Import Data</button>
+            <input type="file" id="importFile" style="display: none" accept=".json" onchange="handleImport(event)">
+        </div>
+
+        <h2>Current Investments</h2>
+        <table id="currentInvestments">
+            <thead>
+                <tr>
+                    <th>Start Date</th>
+                    <th>Investment House</th>
+                    <th>Amount (₦)</th>
+                    <th>Term (Days)</th>
+                    <th>Interest Rate (%)</th>
+                    <th>Maturity Date</th>
+                    <th>Maturity Value (₦)</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+        </div>
+
+        <h2>10-Year Wealth Projection</h2>
+        <table class="projection-table" id="projectionTable">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Annual Contribution (₦)</th>
+                    <th>Interest Earned (₦)</th>
+                    <th>Year-End Balance (₦)</th>
+                    <th>Cumulative Interest (₦)</th>
+                    <th>Monthly Income Potential (₦)</th>
+                </tr>
+            </thead>
+            <tbody id="projectionBody">
+            </tbody>
+        </table>
+
+        <h2>Scenario Analysis</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Monthly Addition (₦)</th>
+                    <th>Interest Rate (%)</th>
+                    <th>Years to Target</th>
+                    <th>Final 10-Year Value (₦)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Conservative</td>
+                    <td class="number">500,000</td>
+                    <td class="number">17.0</td>
+                    <td class="number">8.2</td>
+                    <td class="number">89,500,000</td>
+                </tr>
+                <tr>
+                    <td>Base Case</td>
+                    <td class="number">650,000</td>
+                    <td class="number">19.0</td>
+                    <td class="number">7.5</td>
+                    <td class="number">112,300,000</td>
+                </tr>
+                <tr>
+                    <td>Aggressive</td>
+                    <td class="number">800,000</td>
+                    <td class="number">21.0</td>
+                    <td class="number">6.8</td>
+                    <td class="number">145,200,000</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let investments = [];
+        let db = new InvestmentDB();
+
+        // Initialize database
+        async function initializeApp() {
+            try {
+                // Wait for database to be ready
+                await db.init();
+                console.log('Database initialized');
+
+                // Load saved investments
+                const savedInvestments = await db.getAllInvestments();
+                console.log('Loaded investments:', savedInvestments);
+                investments = savedInvestments || [];
+
+                // Load saved settings
+                const settings = await db.getSettings();
+                if (settings) {
+                    document.getElementById('currentAmount').value = settings.currentAmount || '0';
+                    document.getElementById('monthlyAddition').value = settings.monthlyAddition || '650000';
+                    document.getElementById('interestRate').value = settings.interestRate || '19.0';
+                    document.getElementById('targetAmount').value = settings.targetAmount || '100000000';
+                    document.getElementById('targetAmountDisplay').textContent = formatTarget(settings.targetAmount || 100000000);
+                }
+
+                // Initialize view
+                updateInvestmentTable();
+                calculateProjections();
+            } catch (error) {
+                console.error('Failed to initialize application:', error);
+            }
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(num).replace('NGN', '₦');
+        }
+
+        function calculateMaturityValue(principal, rate, days) {
+            return principal * (1 + (rate / 100) * (days / 365));
+        }
+
+        function getAverageInterestRate() {
+            if (investments.length === 0) return 0;
+            return investments.reduce((sum, inv) => sum + inv.rate, 0) / investments.length;
+        }
+
+        function calculateTotalPortfolioValue() {
+            return investments.reduce((sum, inv) => sum + inv.amount, 0);
+        }
+
+        // Add event listeners for all input fields that affect calculations
+        ['currentAmount', 'monthlyAddition', 'interestRate', 'targetAmount'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateProjections);
+        });
+
+        function formatTarget(amount) {
+            if (amount >= 1000000000) {
+                return (amount / 1000000000).toFixed(1) + 'B';
+            }
+            if (amount >= 1000000) {
+                return (amount / 1000000).toFixed(1) + 'M';
+            }
+            if (amount >= 1000) {
+                return (amount / 1000).toFixed(1) + 'K';
+            }
+            return amount.toString();
+        }
+
+        // Add event listener for target amount changes
+        document.getElementById('targetAmount').addEventListener('input', function() {
+            const targetAmount = parseFloat(this.value) || 0;
+            document.getElementById('targetAmountDisplay').textContent = formatTarget(targetAmount);
+            calculateProjections();
+        });
+
+        async function calculateProjections() {
+            const currentAmount = calculateTotalPortfolioValue();
+            const monthlyAddition = parseFloat(document.getElementById('monthlyAddition').value) || 0;
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value) || 100000000;
+
+            // Use average interest rate from actual investments if available, otherwise use input value
+            const avgInterestRate = getAverageInterestRate();
+            const annualRate = (avgInterestRate > 0 ? avgInterestRate : parseFloat(document.getElementById('interestRate').value)) / 100;
+
+            // Update interest rate input to reflect actual average
+            if (avgInterestRate > 0) {
+                document.getElementById('interestRate').value = avgInterestRate.toFixed(1);
+            }
+
+            let balance = currentAmount;
+            let totalInterest = 0;
+            let yearsToTarget = 0;
+            const currentYear = new Date().getFullYear();
+            const maxYears = 30;
+
+            const projectionBody = document.getElementById('projectionBody');
+            projectionBody.innerHTML = '';
+
+            for (let year = 1; year <= maxYears; year++) {
+                const yearlyContribution = monthlyAddition * 12;
+                const startBalance = balance;
+
+                // Monthly compounding
+                for (let month = 1; month <= 12; month++) {
+                    balance += monthlyAddition;
+                    const monthlyInterest = balance * (annualRate / 12);
+                    balance += monthlyInterest;
+                    totalInterest += monthlyInterest;
+                }
+
+                const yearInterest = balance - startBalance - yearlyContribution;
+                const monthlyIncomeAtCurrentRate = balance * annualRate / 12;
+
+                const row = projectionBody.insertRow();
+
+                const reachedTarget = balance >= targetAmount && yearsToTarget === 0;
+                if (reachedTarget) {
+                    yearsToTarget = year;
+                    row.className = 'milestone';
+                }
+
+                row.innerHTML = `
+                    <td>${currentYear + year - 1}</td>
+                    <td class="number">${formatNumber(yearlyContribution)}</td>
+                    <td class="number">${formatNumber(yearInterest)}</td>
+                    <td class="number">${formatNumber(balance)}</td>
+                    <td class="number">${formatNumber(totalInterest)}</td>
+                    <td class="number">${formatNumber(monthlyIncomeAtCurrentRate)}</td>
+                `;
+
+                if (yearsToTarget > 0 && (year - yearsToTarget) >= 5) {
+                    break;
+                }
+            }
+
+            // Update summary cards with dynamic values
+            document.getElementById('currentValue').textContent = formatNumber(currentAmount);
+            document.getElementById('annualIncome').textContent = formatNumber(currentAmount * annualRate);
+            document.getElementById('yearsTo100M').textContent = yearsToTarget ? yearsToTarget.toFixed(1) : 'Over 30';
+            document.getElementById('targetYear').textContent = yearsToTarget ? (currentYear + yearsToTarget) : 'Over 30 years';
+
+            // Update scenario analysis based on current values
+            updateScenarioAnalysis(currentAmount, monthlyAddition, annualRate, targetAmount);
+
+            // Save current settings to database
+            await db.saveSettings({
+                currentAmount: document.getElementById('currentAmount').value,
+                monthlyAddition: document.getElementById('monthlyAddition').value,
+                interestRate: document.getElementById('interestRate').value,
+                targetAmount: document.getElementById('targetAmount').value
+            });
+        }
+
+        function updateScenarioAnalysis(currentAmount, baseMonthly, baseRate, targetAmount) {
+            const scenarios = [
+                { name: 'Conservative', monthlyMod: 0.8, rateMod: 0.9 },
+                { name: 'Base Case', monthlyMod: 1.0, rateMod: 1.0 },
+                { name: 'Aggressive', monthlyMod: 1.2, rateMod: 1.1 }
+            ];
+
+            const tbody = document.querySelector('table:last-of-type tbody');
+            tbody.innerHTML = '';
+
+            scenarios.forEach(scenario => {
+                const monthlyAmount = baseMonthly * scenario.monthlyMod;
+                const interestRate = baseRate * 100 * scenario.rateMod;
+
+                let balance = currentAmount;
+                let yearsToTarget = 0;
+
+                for (let year = 1; year <= 30; year++) {
+                    const prevBalance = balance;
+
+                    for (let month = 1; month <= 12; month++) {
+                        balance += monthlyAmount;
+                        balance *= (1 + interestRate / 100 / 12);
+                    }
+
+                    if (balance >= targetAmount && yearsToTarget === 0) {
+                        yearsToTarget = year;
+                    }
+
+                    if (year === 10) {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${scenario.name}</td>
+                            <td class="number">${formatNumber(monthlyAmount)}</td>
+                            <td class="number">${interestRate.toFixed(1)}</td>
+                            <td class="number">${yearsToTarget ? yearsToTarget.toFixed(1) : '>30'}</td>
+                            <td class="number">${formatNumber(balance)}</td>
+                        `;
+                    }
+                }
+            });
+        }
+
+        async function addInvestment() {
+            const date = document.getElementById('newInvestmentDate').value;
+            const house = document.getElementById('newInvestmentHouse').value.trim();
+            const amount = document.getElementById('newAmount').value;
+            const term = document.getElementById('newTerm').value;
+            const rate = document.getElementById('newRate').value;
+            const maturity = document.getElementById('newMaturityDate').value;
+
+            // Input validation
+            if (!date || !house || !amount || !term || !rate || !maturity) {
+                alert('All fields are required.');
+                return;
+            }
+            if (parseFloat(amount) <= 0 || parseFloat(rate) <= 0 || parseInt(term) <= 0) {
+                alert('Amount, rate, and term must be positive numbers.');
+                return;
+            }
+            if (isNaN(Date.parse(date)) || isNaN(Date.parse(maturity))) {
+                alert('Invalid date format.');
+                return;
+            }
+            // Sanitize house input (basic)
+            const sanitizedHouse = house.replace(/[<>"'&]/g, '');
+
+            // Store dates in ISO format
+            const investment = {
+                id: Date.now(),
+                date: new Date(date).toISOString().split('T')[0],
+                house: sanitizedHouse,
+                amount: parseFloat(amount),
+                term: parseInt(term),
+                rate: parseFloat(rate),
+                maturity: new Date(maturity).toISOString().split('T')[0]
+            };
+
+            try {
+                await db.saveInvestment(investment);
+                investments.push(investment);
+                updateInvestmentTable();
+                // Clear the form
+                document.getElementById('newInvestmentDate').value = '';
+                document.getElementById('newInvestmentHouse').value = '';
+                document.getElementById('newAmount').value = '';
+                document.getElementById('newTerm').value = '91';
+                document.getElementById('newRate').value = '';
+                document.getElementById('newMaturityDate').value = '';
+                calculateProjections();
+            } catch (error) {
+                alert('Failed to add investment: ' + error.message);
+            }
+        }
+
+        async function deleteInvestment(id) {
+            if (confirm('Are you sure you want to delete this investment?')) {
+                await db.deleteInvestment(id);
+                investments = investments.filter(inv => inv.id !== id);
+                updateInvestmentTable();
+                calculateProjections();
+            }
+        }
+
+        async function editInvestment(id) {
+            const investment = investments.find(inv => inv.id === id);
+            if (!investment) return;
+
+            document.getElementById('newInvestmentDate').value = new Date(investment.date).toISOString().split('T')[0];
+            document.getElementById('newInvestmentHouse').value = investment.house;
+            document.getElementById('newAmount').value = investment.amount;
+            document.getElementById('newTerm').value = investment.term;
+            document.getElementById('newRate').value = investment.rate;
+            document.getElementById('newMaturityDate').value = new Date(investment.maturity).toISOString().split('T')[0];
+
+            // Change add button to update
+            const addButton = document.querySelector('button[onclick="addInvestment()"]');
+            addButton.textContent = 'Update Investment';
+            addButton.onclick = async () => {
+                await updateInvestment(id);
+                addButton.textContent = 'Add Investment';
+                addButton.onclick = addInvestment;
+            };
+        }
+
+        async function updateInvestment(id) {
+            const date = document.getElementById('newInvestmentDate').value;
+            const house = document.getElementById('newInvestmentHouse').value.trim();
+            const amount = document.getElementById('newAmount').value;
+            const term = document.getElementById('newTerm').value;
+            const rate = document.getElementById('newRate').value;
+            const maturity = document.getElementById('newMaturityDate').value;
+
+            // Input validation
+            if (!date || !house || !amount || !term || !rate || !maturity) {
+                alert('All fields are required.');
+                return;
+            }
+            if (parseFloat(amount) <= 0 || parseFloat(rate) <= 0 || parseInt(term) <= 0) {
+                alert('Amount, rate, and term must be positive numbers.');
+                return;
+            }
+            if (isNaN(Date.parse(date)) || isNaN(Date.parse(maturity))) {
+                alert('Invalid date format.');
+                return;
+            }
+            // Sanitize house input (basic)
+            const sanitizedHouse = house.replace(/[<>"'&]/g, '');
+
+            const investment = {
+                id,
+                date: new Date(date).toISOString().split('T')[0],
+                house: sanitizedHouse,
+                amount: parseFloat(amount),
+                term: parseInt(term),
+                rate: parseFloat(rate),
+                maturity: new Date(maturity).toISOString().split('T')[0]
+            };
+
+            try {
+                await db.updateInvestment(investment);
+                const index = investments.findIndex(inv => inv.id === id);
+                investments[index] = investment;
+                updateInvestmentTable();
+                calculateProjections();
+                // Clear form
+                document.getElementById('newInvestmentDate').value = '';
+                document.getElementById('newInvestmentHouse').value = '';
+                document.getElementById('newAmount').value = '';
+                document.getElementById('newTerm').value = '91';
+                document.getElementById('newRate').value = '';
+                document.getElementById('newMaturityDate').value = '';
+            } catch (error) {
+                alert('Failed to update investment: ' + error.message);
+            }
+        }
+
+        function getInvestmentStatus(maturityDate) {
+            const now = new Date();
+            const maturity = new Date(maturityDate);
+            return now > maturity ? 'Matured' : 'Active';
+        }
+
+        function updateInvestmentTable() {
+            const tbody = document.querySelector('#currentInvestments tbody');
+            tbody.innerHTML = '';
+
+            if (investments.length === 0) {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td colspan="9" style="text-align:center; color:#888;">No investments found.</td>';
+                updatePerformanceChart();
+                return;
+            }
+
+            investments.forEach(inv => {
+                const maturityValue = calculateMaturityValue(inv.amount, inv.rate, inv.term);
+                const status = getInvestmentStatus(inv.maturity);
+                const statusClass = status === 'Active' ? 'status-active' : 'status-matured';
+                // Format ISO date to readable string
+                const displayDate = new Date(inv.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
+                const displayMaturity = new Date(inv.maturity).toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${displayDate}</td>
+                    <td>${inv.house}</td>
+                    <td class="number">${formatNumber(inv.amount)}</td>
+                    <td class="number">${inv.term}</td>
+                    <td class="number">${inv.rate.toFixed(1)}</td>
+                    <td>${displayMaturity}</td>
+                    <td class="number">${formatNumber(maturityValue)}</td>
+                    <td class="${statusClass}">${status}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-edit" onclick="editInvestment(${inv.id})" aria-label="Edit investment">Edit</button>
+                            <button class="btn-delete" onclick="deleteInvestment(${inv.id})" aria-label="Delete investment">Delete</button>
+                        </div>
+                    </td>
+                `;
+            });
+
+            updatePerformanceChart();
+        }
+
+        function exportData() {
+            const data = {
+                investments,
+                settings: {
+                    currentAmount: document.getElementById('currentAmount').value,
+                    monthlyAddition: document.getElementById('monthlyAddition').value,
+                    interestRate: document.getElementById('interestRate').value,
+                    targetAmount: document.getElementById('targetAmount').value
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `investment-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        async function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Clear existing data
+                    await db.resetDatabase();
+                    investments = [];
+
+                    // Import investments
+                    for (const inv of data.investments) {
+                        await db.saveInvestment(inv);
+                        investments.push(inv);
+                    }
+
+                    // Import settings
+                    await db.saveSettings(data.settings);
+                    document.getElementById('currentAmount').value = data.settings.currentAmount;
+                    document.getElementById('monthlyAddition').value = data.settings.monthlyAddition;
+                    document.getElementById('interestRate').value = data.settings.interestRate;
+                    document.getElementById('targetAmount').value = data.settings.targetAmount;
+
+                    updateInvestmentTable();
+                    calculateProjections();
+                    alert('Data imported successfully');
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updatePerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (investments.length === 0) {
+                if (window.performanceChart && typeof window.performanceChart.destroy === 'function') {
+                    window.performanceChart.destroy();
+                }
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                return;
+            }
+            const sortedInvestments = [...investments].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const data = {
+                labels: sortedInvestments.map(inv => new Date(inv.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})),
+                datasets: [{
+                    label: 'Investment Amount (₦)',
+                    data: sortedInvestments.map(inv => inv.amount),
+                    borderColor: '#3498db',
+                    fill: false
+                }, {
+                    label: 'Maturity Value (₦)',
+                    data: sortedInvestments.map(inv => calculateMaturityValue(inv.amount, inv.rate, inv.term)),
+                    borderColor: '#27ae60',
+                    fill: false
+                }]
+            };
+            if (window.performanceChart && typeof window.performanceChart.destroy === 'function') {
+                window.performanceChart.destroy();
+            }
+            window.performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '₦' + formatNumber(value)
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: context => {
+                                    const value = context.raw;
+                                    return `${context.dataset.label}: ${formatNumber(value)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // REMOVE or comment out notification initialization and related code
+        // if ('Notification' in window) {
+        //     Notification.requestPermission();
+        // }
+
+        // function checkMaturityNotifications() {
+        //     if (Notification.permission !== 'granted') return;
+        //
+        //     const today = new Date();
+        //     const threeDaysFromNow = new Date();
+        //     threeDaysFromNow.setDate(today.getDate() + 3);
+        //
+        //     investments.forEach(inv => {
+        //         const maturityDate = new Date(inv.maturity);
+        //         if (maturityDate > today && maturityDate <= threeDaysFromNow) {
+        //             new Notification('Investment Maturing Soon', {
+        //                 body: `Your investment of ${formatNumber(inv.amount)} with ${inv.house} will mature on ${inv.maturity}`,
+        //                 icon: '/favicon.ico'
+        //             });
+        //         }
+        //     });
+        // }
+
+        // setInterval(checkMaturityNotifications, 24 * 60 * 60 * 1000);
+        // checkMaturityNotifications(); // Check immediately on load
+
+        // Initialize with empty values
+        document.getElementById('currentAmount').value = '0';
+        document.getElementById('monthlyAddition').value = '650000';
+        document.getElementById('interestRate').value = '19.0';
+        document.getElementById('targetAmount').value = '100000000';
+
+        // Initialize target display
+        document.getElementById('targetAmountDisplay').textContent = formatTarget(100000000);
+
+        // Initialize calculations
+        calculateProjections();
+        updateInvestmentTable();
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        async function resetDatabase() {
+            if (confirm('Are you sure you want to reset the database? This will delete all your investments and settings.')) {
+                await db.resetDatabase();
+                investments = [];
+                updateInvestmentTable();
+
+                // Reset form values to defaults
+                document.getElementById('currentAmount').value = '0';
+                document.getElementById('monthlyAddition').value = '650000';
+                document.getElementById('interestRate').value = '19.0';
+                document.getElementById('targetAmount').value = '100000000';
+
+                calculateProjections();
+                alert('Database has been reset successfully');
+            }
+        }
+    </script>
+</body>
+</html>
